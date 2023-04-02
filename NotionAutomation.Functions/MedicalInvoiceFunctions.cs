@@ -27,13 +27,11 @@ namespace NotionAutomation.Functions
       _httpClientFactory = httpClientFactory;
     }
     [Function("DownloadDemo")]
-    public async Task<IActionResult> RunDownloadDemoAsync([HttpTrigger(AuthorizationLevel.Function, "get", "download-demo")] HttpRequestData req)
+    public IActionResult RunDownloadDemo([HttpTrigger(AuthorizationLevel.Function, "get", "download-demo")] HttpRequestData req)
     {
       _logger.LogInformation("C# HTTP trigger was called.");
 
       byte[] filebytes = Encoding.UTF8.GetBytes("Das ist der Inhalt der Textdatei");
-
-      await Task.Delay(50);
 
       return new FileContentResult(filebytes, "application/octet-stream")
       {
