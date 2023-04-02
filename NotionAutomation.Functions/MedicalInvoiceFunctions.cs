@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Configuration;
@@ -26,26 +27,18 @@ namespace NotionAutomation.Functions
       _httpClientFactory = httpClientFactory;
     }
     [Function("DownloadDemo")]
-    public async Task<HttpResponseData> RunDownloadDemoAsync([HttpTrigger(AuthorizationLevel.Function, "get", "download-demo")] HttpRequestData req)
+    public async Task<IActionResult> RunDownloadDemoAsync([HttpTrigger(AuthorizationLevel.Function, "get", "download-demo")] HttpRequestData req)
     {
       _logger.LogInformation("C# HTTP trigger was called.");
 
-      string? content = await req.ReadAsStringAsync(Encoding.UTF8);
-      ArgumentException.ThrowIfNullOrEmpty(content);
+      byte[] filebytes = Encoding.UTF8.GetBytes("Das ist der Inhalt der Textdatei");
 
-      // https://www.notion.so/jfuerlinger/2023-00909-2fa6a0aceed646d59a8cffea433cbe52?pvs=4
-      var processor = new NotionUriProcessor(new Uri(content));
+      await Task.Delay(50);
 
-      Guid pageId = processor.GetPageId();
-
-      using var notionClient = _httpClientFactory.CreateClient("notionClient");
-
-      var response = req.CreateResponse(HttpStatusCode.OK);
-      response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-
-      response.WriteString("Welcome to Azure Functions!");
-
-      return response;
+      return new FileContentResult(filebytes, "application/octet-stream")
+      {
+        FileDownloadName = "Sample.txt"
+      };
     }
 
 
