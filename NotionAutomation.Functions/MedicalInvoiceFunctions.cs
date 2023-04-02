@@ -33,7 +33,7 @@ namespace NotionAutomation.Functions
 
       byte[] filebytes = Encoding.UTF8.GetBytes("Das ist der Inhalt der Textdatei");
 
-      return new FileContentResult(filebytes, "application/octet-stream")
+      return new FileContentResult(filebytes, "text/plain")
       {
         FileDownloadName = "Sample.txt"
       };
