@@ -27,7 +27,7 @@ namespace NotionAutomation.Core
       string nr = invoice.properties.Nr.title.Single().plain_text;
       DateTime behandlungsdatum = DateTime.Parse(invoice.properties.Behandlungsdatum.date.start);
       string? patient = await GetPatientsNameAsync(invoice);
-      //string? arzt = await GetDoctorsNameAsync(invoice);
+      string? arzt = await GetDoctorsNameAsync(invoice);
 
       return new InvoiceDto(
         Nr: nr,

@@ -53,7 +53,7 @@
   {
     public string id { get; set; }
     public string type { get; set; }
-    public Rich_Text2[] rich_text { get; set; }
+    public Rich_Text[] rich_text { get; set; }
   }
     
 

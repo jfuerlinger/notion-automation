@@ -183,13 +183,6 @@
     public string color { get; set; }
   }
 
-  public class Tags
-  {
-    public string id { get; set; }
-    public string type { get; set; }
-    public object[] multi_select { get; set; }
-  }
-
   public class BestätigungÖGK
   {
     public string id { get; set; }

@@ -34,7 +34,7 @@ namespace NotionAutomation.Core.Model
   {
     public string type { get; set; }
     public Text text { get; set; }
-    public Annotations1 annotations { get; set; }
+    public Annotations annotations { get; set; }
     public string plain_text { get; set; }
     public object href { get; set; }
   }
