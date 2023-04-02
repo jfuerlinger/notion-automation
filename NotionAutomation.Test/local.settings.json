@@ -1,0 +1,8 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "NotionApiKey": "secret_hLjDSJJzsTYQ9J822le1B2RVVFwbRpKEYv4WD17SghO"
+    }
+}

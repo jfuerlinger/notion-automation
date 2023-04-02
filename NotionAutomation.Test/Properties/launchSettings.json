@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "NotionAutomation.Test": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "NotionApiKey": "secret_hLjDSJJzsTYQ9J822le1B2RVVFwbRpKEYv4WD17SghO"
+      }
+    }
+  }
+}
