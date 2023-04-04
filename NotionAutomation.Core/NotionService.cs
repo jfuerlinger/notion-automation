@@ -1,23 +1,23 @@
 ﻿using NotionAutomation.Core.Model;
+using System.IO.Compression;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace NotionAutomation.Core
 {
-  public record InvoiceDto(string Nr, string? Patient, DateTime Behandlungsdatum, byte[] Beleg1, byte[] Beleg2, byte[] Beleg3, byte[] BelegOeGK, string Arzt);
-
-  public class NotionService : INotionService
+  public sealed class NotionService : INotionService
   {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _notionHttpClient;
+    private readonly HttpClient _plainHttpClient;
 
-    public NotionService(HttpClient httpClient)
+    public NotionService(HttpClient notionHttpClient, HttpClient plainHttpClient)
     {
-      _httpClient = httpClient;
+      _notionHttpClient = notionHttpClient;
+      _plainHttpClient = plainHttpClient;
     }
 
     public async Task<InvoiceDto> GetInvoiceByIdAsync(Guid invoiceId)
     {
-      var invoice = await _httpClient.GetFromJsonAsync<InternalInvoiceResult>($"v1/pages/{invoiceId:N}");
+      var invoice = await _notionHttpClient.GetFromJsonAsync<InternalInvoiceResult>($"v1/pages/{invoiceId:N}");
 
       if (invoice == null)
       {
@@ -26,56 +26,186 @@ namespace NotionAutomation.Core
 
       string nr = invoice.properties.Nr.title.Single().plain_text;
       DateTime behandlungsdatum = DateTime.Parse(invoice.properties.Behandlungsdatum.date.start);
-      string? patient = await GetPatientsNameAsync(invoice);
-      string? arzt = await GetDoctorsNameAsync(invoice);
+      var fetchPatientTask = GetPatientsNameAsync(invoice);
+      var fetchArztTask = GetDoctorsNameAsync(invoice);
+      var fetchBelegeTask = GetBelegeAsync(invoice);
+      var fetchBelegeOegkTask = GetBelegeOegkAsync(invoice);
+
+      await Task.WhenAll(new[] { fetchPatientTask, fetchArztTask });
+      await Task.WhenAll(new[] { fetchBelegeTask, fetchBelegeOegkTask });
 
       return new InvoiceDto(
         Nr: nr,
         Behandlungsdatum: behandlungsdatum,
-        Patient: patient,
-        Beleg1: null,
-        Beleg2: null,
-        Beleg3: null,
-        BelegOeGK: null,
-        Arzt: arzt);
+        Patient: fetchPatientTask.Result,
+        BelegeEinreichung: fetchBelegeTask.Result,
+        BelegeOeGK: fetchBelegeOegkTask.Result,
+        Arzt: fetchArztTask.Result);
+    }
+
+    private async Task<Document[]> GetBelegeOegkAsync(InternalInvoiceResult invoice)
+    {
+      var files = invoice.properties.BelegÖGK?.files;
+
+      if (files != null && files.Any())
+      {
+        return await DownloadDocumentsAsync(invoice.properties.BelegÖGK?.files!, "BelegÖGK");
+      }
+
+      return await ValueTask.FromResult(Array.Empty<Document>());
+    }
+
+    private async Task<Document[]> GetBelegeAsync(InternalInvoiceResult invoice)
+    {
+      var files = invoice.properties.Belege?.files;
+
+      if (files != null && files.Any())
+      {
+        return await DownloadDocumentsAsync(invoice.properties.Belege?.files!, "Einreichung");
+      }
+
+      return await ValueTask.FromResult(Array.Empty<Document>());
+    }
+
+    private async ValueTask<Document[]> DownloadDocumentsAsync(Model.File[] files, string documentPrefix)
+    {
+      var urls = files?.Select(f => f.file.url);
+
+      if (urls != null && urls.Any())
+      {
+        List<Task<Document>> downloadTasks = new();
+        int idx = 1;
+        foreach (var url in urls)
+        {
+          string documentName = CalculateDocumentName(documentPrefix, url, urls.Count(), idx);
+          downloadTasks.Add(Task.Run(async () => new Document(documentName, await _plainHttpClient.GetByteArrayAsync(url))));
+          idx++;
+        }
+
+        await Task.WhenAll(downloadTasks);
+
+        return downloadTasks
+          .Select(t => t.Result)
+          .ToArray();
+      }
+
+      return await Task.FromResult(Array.Empty<Document>());
+    }
+
+    private static string CalculateDocumentName(string documentPrefix, string url, int countOfDocuments, int idx)
+    {
+      if (countOfDocuments > 1)
+      {
+        return $"{documentPrefix}_Teil{idx:00}.{GetFileExtenion(url)}";
+      }
+      else
+      {
+        return $"{documentPrefix}.{GetFileExtenion(url)}";
+      }
+    }
+
+    private static string? GetFileExtenion(string url)
+    {
+      string? extension = null;
+      if (!string.IsNullOrEmpty(url))
+      {
+        int idxOfPoint = url.LastIndexOf('.');
+        if (idxOfPoint != -1)
+        {
+          int idxOfQuestionMark = url.IndexOf("?");
+          if (idxOfQuestionMark != -1)
+          {
+            return url.Substring(idxOfPoint + 1, idxOfQuestionMark - idxOfPoint - 1);
+          }
+          else
+          {
+            return url.Substring(idxOfPoint + 1);
+          }
+
+        }
+      }
+
+      return extension;
     }
 
     private async Task<string?> GetDoctorsNameAsync(InternalInvoiceResult invoice)
     {
-      return "n/a";
+      string? doctorsName = null;
+      var doctorsId = invoice.properties.Ärzte?.relation?.FirstOrDefault()?.id;
 
-      //string? doctorsName = null;
-      //var doctorsId = invoice.properties.Ärzte.relation.FirstOrDefault() as JsonElement?;
+      if (!string.IsNullOrEmpty(doctorsId))
+      {
+        Guid id = Guid.Parse(doctorsId);
+        var patient = await _notionHttpClient.GetFromJsonAsync<InternalDoctorResult>($"v1/pages/{id:N}");
+        doctorsName = patient?.properties?.Name?.title?.FirstOrDefault()?.plain_text;
+      }
 
-      //if (doctorsId.HasValue)
-      //{
-      //  Guid id = doctorsId.Value.GetProperty("id").GetGuid();
-
-      //  var patient = await _httpClient.GetFromJsonAsync<InternalDoctorResult>($"v1/pages/{id:N}");
-
-      //  doctorsName = patient?.properties?.Name?.title?.FirstOrDefault()?.plain_text;
-      //}
-
-      //return doctorsName;
+      return doctorsName;
     }
 
     private async Task<string?> GetPatientsNameAsync(InternalInvoiceResult invoice)
     {
-      return "n/a";
+      string? patientsName = null;
+      var patientId = invoice.properties.Patient?.relation?.FirstOrDefault()?.id;
 
-      //string? patientsName = null;
-      //var patientId = invoice.properties.Patient.relation.FirstOrDefault() as JsonElement?;
+      if (!string.IsNullOrEmpty(patientId))
+      {
+        Guid id = Guid.Parse(patientId);
 
-      //if (patientId.HasValue)
-      //{
-      //  Guid id = patientId.Value.GetProperty("id").GetGuid();
+        var patient = await _notionHttpClient.GetFromJsonAsync<InternalPatientResult>($"v1/pages/{id:N}");
+        patientsName = patient?.properties?.Name?.title?.FirstOrDefault()?.plain_text;
+      }
 
-      //  var patient = await _httpClient.GetFromJsonAsync<InternalPatientResult>($"v1/pages/{id:N}");
+      return patientsName;
+    }
 
-      //  patientsName = patient?.properties?.Name?.title?.FirstOrDefault()?.plain_text;
-      //}
+    public async Task<Document> GetInvoiceAsZipAsync(Guid invoiceId)
+    {
+      var invoice = await GetInvoiceByIdAsync(invoiceId);
 
-      //return patientsName;
+      using var memoryStream = new MemoryStream();
+      using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, false))
+      {
+        if (invoice.BelegeEinreichung.Any())
+        {
+          await AddFilesIntoZipFolderAsync(invoice.BelegeEinreichung, "00_Einreichung", archive);
+        }
+
+        if (invoice.BelegeOeGK.Any())
+        {
+          await AddFilesIntoZipFolderAsync(invoice.BelegeOeGK, "01_ÖGK", archive);
+        }
+
+      }
+
+      return new Document($"{invoice.Behandlungsdatum:yyyy-MM-dd}_{NormalizeName(invoice.Patient)}_{NormalizeName(invoice.Arzt)}.zip", memoryStream.ToArray());
+    }
+
+    private static async Task AddFilesIntoZipFolderAsync(Document[] documents, string folder, ZipArchive archive)
+    {
+      archive.CreateEntry($"{folder}/");
+
+      foreach (Document document in documents)
+      {
+        var fileInZip = archive.CreateEntry($"{folder}/{document.FileName}");
+
+        using Stream stream = fileInZip.Open();
+        await stream.WriteAsync(document.Content, 0, document.Content.Length);
+        await stream.FlushAsync();
+      }
+    }
+
+    private static string? NormalizeName(string? arzt)
+    {
+      if (!string.IsNullOrEmpty(arzt))
+      {
+        arzt = arzt
+                .Trim()
+                .Replace("Dr.", "")
+                .Replace(" ", "");
+      }
+
+      return arzt;
     }
   }
 }

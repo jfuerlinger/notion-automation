@@ -1,4 +1,6 @@
-﻿namespace NotionAutomation.Core.Model
+﻿using System.Text.Json.Serialization;
+
+namespace NotionAutomation.Core.Model
 {
 
 
@@ -21,6 +23,8 @@
   public class InvoiceProperties
   {
     public EingereichtMerkur EingereichtMerkur { get; set; }
+    
+    [JsonPropertyName("Beleg ÖGK")]
     public BelegÖGK BelegÖGK { get; set; }
     public Kommentar Kommentar { get; set; }
     public ErstattungSumme ErstattungSumme { get; set; }
@@ -50,7 +54,7 @@
   {
     public string id { get; set; }
     public string type { get; set; }
-    public object[] files { get; set; }
+    public File[] files { get; set; }
   }
 
   public class Kommentar
@@ -105,7 +109,7 @@
   {
     public string id { get; set; }
     public string type { get; set; }
-    public int number { get; set; }
+    public decimal number { get; set; }
   }
 
   public class Belege
@@ -119,10 +123,10 @@
   {
     public string name { get; set; }
     public string type { get; set; }
-    public File1 file { get; set; }
+    public FileDetails file { get; set; }
   }
 
-  public class File1
+  public class FileDetails
   {
     public string url { get; set; }
     public DateTime expiry_time { get; set; }
@@ -132,14 +136,14 @@
   {
     public string id { get; set; }
     public string type { get; set; }
-    public object number { get; set; }
+    public decimal number { get; set; }
   }
 
   public class ErstattungMerkur
   {
     public string id { get; set; }
     public string type { get; set; }
-    public object number { get; set; }
+    public decimal number { get; set; }
   }
 
   public class Behandlungsdatum
