@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33402.96
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotionAutomation.Functions", "NotionAutomation.Functions\NotionAutomation.Functions.csproj", "{C247E63C-2B9A-4121-8DAF-0BF747AFB4A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotionAutomation.Functions", "NotionAutomation.Functions\NotionAutomation.Functions.csproj", "{C247E63C-2B9A-4121-8DAF-0BF747AFB4A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotionAutomation.Core", "NotionAutomation.Core\NotionAutomation.Core.csproj", "{49216A2E-5378-40B7-81BF-D15572E6DFDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotionAutomation.Core", "NotionAutomation.Core\NotionAutomation.Core.csproj", "{49216A2E-5378-40B7-81BF-D15572E6DFDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotionAutomation.Test", "NotionAutomation.Test\NotionAutomation.Test.csproj", "{165DCDBD-3C13-46DE-86B7-12776FA96244}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotionAutomation.Test", "NotionAutomation.Test\NotionAutomation.Test.csproj", "{165DCDBD-3C13-46DE-86B7-12776FA96244}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotionAutomation.Runner", "NotionAutomation.Runner\NotionAutomation.Runner.csproj", "{5CD803BC-D4D7-43E8-A8D2-A6DA709DA656}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotionAutomation.Runner", "NotionAutomation.Runner\NotionAutomation.Runner.csproj", "{5CD803BC-D4D7-43E8-A8D2-A6DA709DA656}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotionAutomation.Blazor.UI", "NotionAutomation.Blazor.UI\NotionAutomation.Blazor.UI.csproj", "{381DFEC2-C3C9-4333-A605-2EA00BEED4B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{5CD803BC-D4D7-43E8-A8D2-A6DA709DA656}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CD803BC-D4D7-43E8-A8D2-A6DA709DA656}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CD803BC-D4D7-43E8-A8D2-A6DA709DA656}.Release|Any CPU.Build.0 = Release|Any CPU
+		{381DFEC2-C3C9-4333-A605-2EA00BEED4B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{381DFEC2-C3C9-4333-A605-2EA00BEED4B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{381DFEC2-C3C9-4333-A605-2EA00BEED4B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{381DFEC2-C3C9-4333-A605-2EA00BEED4B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

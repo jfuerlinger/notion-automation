@@ -1,11 +1,16 @@
 ﻿using NotionAutomation.Core.Model;
 using System.IO.Compression;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace NotionAutomation.Core
 {
   public sealed class NotionService : INotionService
   {
+    private const string _databaseId = "8c96ab39483f4573a941d97067c6ae01";
+
     private readonly HttpClient _notionHttpClient;
     private readonly HttpClient _plainHttpClient;
 
@@ -15,14 +20,11 @@ namespace NotionAutomation.Core
       _plainHttpClient = plainHttpClient;
     }
 
-    public async Task<InvoiceDto> GetInvoiceByIdAsync(Guid invoiceId)
+    public async Task<InvoiceDto> GetInvoiceByIdAsync(string invoiceId)
     {
-      var invoice = await _notionHttpClient.GetFromJsonAsync<InternalInvoiceResult>($"v1/pages/{invoiceId:N}");
-
-      if (invoice == null)
-      {
-        throw new Exception($"Unable to retrieve invoice with id '{invoiceId}'");
-      }
+      InternalInvoiceResult? invoice =
+        await _notionHttpClient.GetFromJsonAsync<InternalInvoiceResult>($"v1/pages/{invoiceId:N}")
+          ?? throw new Exception($"Unable to retrieve invoice with id '{invoiceId}'");
 
       string nr = invoice.properties.Nr.title.Single().plain_text;
       DateTime behandlungsdatum = DateTime.Parse(invoice.properties.Behandlungsdatum.date.start);
@@ -96,7 +98,7 @@ namespace NotionAutomation.Core
     {
       if (countOfDocuments > 1)
       {
-        return $"{documentPrefix}_Teil{idx:00}.{GetFileExtenion(url)}";
+        return $"{documentPrefix}_{idx:00}.{GetFileExtenion(url)}";
       }
       else
       {
@@ -119,7 +121,7 @@ namespace NotionAutomation.Core
           }
           else
           {
-            return url.Substring(idxOfPoint + 1);
+            return url[(idxOfPoint + 1)..];
           }
 
         }
@@ -159,7 +161,7 @@ namespace NotionAutomation.Core
       return patientsName;
     }
 
-    public async Task<Document> GetInvoiceAsZipAsync(Guid invoiceId)
+    public async Task<Document> GetInvoiceAsZipByIdAsync(string invoiceId)
     {
       var invoice = await GetInvoiceByIdAsync(invoiceId);
 
@@ -190,7 +192,7 @@ namespace NotionAutomation.Core
         var fileInZip = archive.CreateEntry($"{folder}/{document.FileName}");
 
         using Stream stream = fileInZip.Open();
-        await stream.WriteAsync(document.Content, 0, document.Content.Length);
+        await stream.WriteAsync(document.Content.AsMemory(0, document.Content.Length));
         await stream.FlushAsync();
       }
     }
@@ -206,6 +208,27 @@ namespace NotionAutomation.Core
       }
 
       return arzt;
+    }
+
+    public async Task<InvoiceInfoDto[]> GetAllInvoicesAsync()
+    {
+      var invoices = new List<InvoiceInfoDto>();
+
+
+      InvoiceInfoRootobject? result;
+      do
+      {
+        var response= await _notionHttpClient.PostAsync($"v1/databases/{_databaseId}/query", new StringContent("", new MediaTypeHeaderValue("application/json")))
+          ?? throw new Exception("Unable to query the invoices!");
+
+        result = await JsonSerializer.DeserializeAsync<InvoiceInfoRootobject>(response.Content.ReadAsStream());
+
+        //invoices.AddRange(result.results.Select(r => r.properties));
+
+      } while (result!.has_more);
+
+
+      return invoices.ToArray();
     }
   }
 }

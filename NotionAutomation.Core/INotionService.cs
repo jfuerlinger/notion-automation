@@ -1,4 +1,6 @@
-﻿namespace NotionAutomation.Core
+﻿using NotionAutomation.Core.Model;
+
+namespace NotionAutomation.Core
 {
   public record Document(string FileName, byte[] Content);
   public record InvoiceDto(string Nr, string? Patient, DateTime Behandlungsdatum, Document[] BelegeEinreichung, Document[] BelegeOeGK, string? Arzt);
@@ -6,7 +8,8 @@
 
   public interface INotionService
   {
-    Task<InvoiceDto> GetInvoiceByIdAsync(Guid invoiceId);
-    Task<Document> GetInvoiceAsZipAsync(Guid invoiceId);
+    Task<InvoiceInfoDto[]> GetAllInvoicesAsync();
+    Task<InvoiceDto> GetInvoiceByIdAsync(string invoiceId);
+    Task<Document> GetInvoiceAsZipByIdAsync(string invoiceId);
   }
 }

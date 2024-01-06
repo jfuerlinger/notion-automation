@@ -56,4 +56,18 @@ namespace NotionAutomation.Core.Model
     public object[] multi_select { get; set; }
   }
 
+  public class ID
+  {
+    public string id { get; set; }
+    public string type { get; set; }
+    public Unique_Id unique_id { get; set; }
+  }
+
+  public class Unique_Id
+  {
+    public string prefix { get; set; }
+    public int number { get; set; }
+  }
+
+
 }

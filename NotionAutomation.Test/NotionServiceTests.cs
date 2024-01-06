@@ -36,15 +36,15 @@ namespace NotionAutomation.Test
     {
       var config = LoadConfiguration();
 
-      using HttpClient httpClient = new();
-      httpClient.BaseAddress = new Uri("https://api.notion.com");
-      httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config["Values:NotionApiKey"]}");
-      httpClient.DefaultRequestHeaders.Add("Notion-Version", "2022-06-28");
-      httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+      using HttpClient notionHttpClient = new();
+      notionHttpClient.BaseAddress = new Uri("https://api.notion.com");
+      notionHttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config["Values:NotionApiKey"]}");
+      notionHttpClient.DefaultRequestHeaders.Add("Notion-Version", "2022-06-28");
+      notionHttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
       
-      INotionService notionService = new NotionService(httpClient);
+      var notionService = new NotionService(notionHttpClient, new HttpClient());
 
-      var invoice = await notionService.GetInvoiceByIdAsync(new Guid("2fa6a0aceed646d59a8cffea433cbe52"));
+      var invoice = await notionService.GetInvoiceByIdAsync("2fa6a0aceed646d59a8cffea433cbe52");
 
       Assert.NotNull(invoice);
       Assert.Equal("2023/00909", invoice.Nr);

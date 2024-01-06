@@ -116,7 +116,7 @@ namespace NotionAutomation.Functions
       //using var notionClient = _httpClientFactory.CreateClient("notionClient");
 
 
-      var zipDocument = await _notionService.GetInvoiceAsZipAsync(pageId);
+      var zipDocument = await _notionService.GetInvoiceAsZipByIdAsync(pageId.ToString());
 
       var response = req.CreateResponse();
       response.StatusCode = HttpStatusCode.OK;
